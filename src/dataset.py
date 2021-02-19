@@ -12,6 +12,7 @@ from torchvision import transforms as T
 from torch.utils import data
 from pre_process import pre_process
 from PIL import Image
+import pandas as pd
 
 
 def table(c):
@@ -58,7 +59,7 @@ def transforms(img_dir, img_name, pre=False):
     return data
 
 class Data(data.Dataset):
-    def __init__(self, train, pre_process=False, dir='../captcha'):
+    def __init__(self, train, pre_process=False, dir='captcha', train_val_ratio = 0.9):
         """__init__ method.
 
         The __init__ method may be documented in either the class level
@@ -77,10 +78,11 @@ class Data(data.Dataset):
         self.png_dict = self.load_csv()
         self.png_list = tuple(self.png_dict.keys())
         self.pre_process = pre_process
+        self.train_val_ratio = train_val_ratio
         if train:
-            self.png_list = self.png_list[:30000] # modify here to change train set size
+            self.png_list = self.png_list[:int(len(self.png_list) * self.train_val_ratio)]
         else:
-            self.png_list = self.png_list[30000:31000] # modify here to change val. set size
+            self.png_list = self.png_list[int(len(self.png_list) * self.train_val_ratio):] 
         # random.shuffle(self.png_list)
 
 
@@ -131,6 +133,13 @@ class Data(data.Dataset):
 
 
 if __name__ == "__main__":    
+    import cv2, sys
     t = Data(train=True)
-    x  = t[0]
-    pass
+
+    for i in range(len(t)):
+        img, label  = t[i]
+
+        cv2.imshow('tmp', img.numpy()[0, :, :, np.newaxis])
+        k = cv2.waitKey()
+        if k == 27:
+            sys.exit()

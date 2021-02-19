@@ -22,6 +22,48 @@ class CNN(nn.Module):
     """
     def __init__(self):
         super(CNN, self).__init__()
+        # self.hidden1 = nn.Sequential(
+        #     nn.Conv2d(1, 32, 3, padding=1, stride=2)
+        #     ,nn.BatchNorm2d(32)
+        #     ,nn.ReLU(inplace=True)
+        #     ,nn.Conv2d(32, 32, 1, padding = 1)
+        #     ,nn.BatchNorm2d(32)
+        #     ,nn.ReLU(inplace=True)
+        # )
+
+        # self.hidden2 = nn.Sequential(
+        #     nn.Conv2d(32, 64, 3, padding=1, stride=2)
+        #     ,nn.BatchNorm2d(64)
+        #     ,nn.ReLU(inplace=True)
+        #     ,nn.Conv2d(64, 64, 1, padding = 1)
+        #     ,nn.BatchNorm2d(64)
+        #     ,nn.ReLU(inplace=True)
+        # )
+
+        # self.hidden3 = nn.Sequential(
+        #     nn.Conv2d(64, 128, 3, padding=1, stride = 2)
+        #     ,nn.BatchNorm2d(128)
+        #     ,nn.ReLU(inplace=True)
+        #     ,nn.Conv2d(128, 128, 1, padding = 1)
+        #     ,nn.BatchNorm2d(128)
+        #     ,nn.ReLU(inplace=True)
+        # )
+
+        # self.hidden4 = nn.Sequential(
+        #     nn.Conv2d(128, 256, 3, padding = 1, stride= 2)
+        #     ,nn.BatchNorm2d(256)
+        #     ,nn.ReLU(inplace=True),
+        #     nn.Conv2d(256, 256, 3, padding = 1, stride= 1)
+        #     ,nn.BatchNorm2d(256)
+        #     ,nn.ReLU(inplace=True)
+        # )
+        
+        # self.hidden5 = nn.Sequential(
+        #     nn.Conv2d(256, 256, 3, padding = 1, stride= 2)
+        #     ,nn.BatchNorm2d(256)
+        #     ,nn.ReLU(inplace=True)
+        # )
+
         self.hidden1 = nn.Sequential(
             nn.Conv2d(1, 32, 3, padding=1)
             ,nn.ReLU()
@@ -60,7 +102,7 @@ class CNN(nn.Module):
             ,Flatten()
             ,nn.Dropout(p=0.3)
         )
-        
+
         self.digit1 = nn.Linear(9216, 36)
         self.digit2 = nn.Linear(9216, 36)
         self.digit3 = nn.Linear(9216, 36)
@@ -95,3 +137,9 @@ class CNN(nn.Module):
 
         """
         self.load_state_dict(torch.load(path, map_location=lambda storage, loc: storage))
+
+if __name__ == "__main__":
+    from torchsummary import summary
+    cnn = CNN()
+
+    summary(cnn.cuda(), (1, 128, 128))
