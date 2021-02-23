@@ -31,115 +31,50 @@ def table(c):
         i -= 55
     return i
 
-def transforms(img_dir, img_name, pre=False):
-    """transforms the img.
-
-    Args:
-        img_dir (str): dir. of image.
-        img_name (str): file name of image.
-        pre (bool): toggle pre-process
-
-    Returns:
-        tensor: image after transforms.
-    """
-    if pre:
-        cache_path = os.path.join(img_dir, 'cache', img_name+'pre_1.png')
-        if os.path.isfile(cache_path):
-            data = Image.open(cache_path).convert('L')
-        else:
-            data = pre_process(os.path.join(img_dir, img_name), remove_curve=True)
-            data.save(cache_path)
-    else:
-        data = Image.open(os.path.join(img_dir, img_name)).convert('L')
-    transforms = T.Compose([
-        T.Resize((128,128)),
-        T.ToTensor(),
-    ]) 
-    data = transforms(data)
-    return data
 
 class Data(data.Dataset):
-    def __init__(self, train, pre_process=False, dir='captcha', train_val_ratio = 0.9):
-        """__init__ method.
-
-        The __init__ method may be documented in either the class level
-        docstring, or as a docstring on the __init__ method itself.
-
-        Note:
-            Please modify slice size at line 80 and 83 to meet train size and val. size you want.
-
-        Args:
-            train (bool): load training dataset or not.
-            pre_process (bool): enable pre_process or not
-            dir (str): dataset dir.
-
-        """
+    def __init__(self, train, dir="dataset/train", train_val_ratio=0.9):
         self.dir = dir
-        self.png_dict = self.load_csv()
-        self.png_list = tuple(self.png_dict.keys())
+        self.load_csv()
         self.pre_process = pre_process
         self.train_val_ratio = train_val_ratio
         if train:
-            self.png_list = self.png_list[:int(len(self.png_list) * self.train_val_ratio)]
+            self.data = self.data[: int(len(self.data) * self.train_val_ratio)]
         else:
-            self.png_list = self.png_list[int(len(self.png_list) * self.train_val_ratio):] 
-        # random.shuffle(self.png_list)
+            self.data = self.data[int(len(self.data) * self.train_val_ratio) :]
 
-
-    def load_csv(self, name='label.csv'):
-        """load label csv.
-
-        Args:
-            name( str ): CSV file name.
-
-        Returns:
-            dict: dict of image file names and labels.
-
-        """
-        png_dict = {}
-        with open(os.path.join(self.dir, name), 'r') as f:
-            for name, lable in map(lambda line: line.split(','), f.readlines()):
-                png_dict[name] = lable.strip()
-        return png_dict
-
+    def load_csv(self, name="labels.csv"):
+        data = pd.read_csv(os.path.join(self.dir, name), skiprows=None)
+        data = data.values
+        self.data = data.tolist()
 
     def __getitem__(self, index):
-        """__getitem__ method.
+        name, label = self.data[index]
+        c_label = np.array(list(map(table, label)))
 
-        Args:
-            index( int ): index of data to return.
+        data = self.transforms(name)
+        return data, torch.tensor(c_label, dtype=torch.long), label
 
-        Returns:
-            tuple(tensor, tensor): image and label.
-
-        """
-        name = self.png_list[index]
-        label = self.png_dict[name]
-        a = np.array(list(map(table, label)))
-
-        img_path = os.path.join(self.dir, name)
-        data = transforms(self.dir, name, pre=self.pre_process)
-        return data, torch.tensor(a, dtype=torch.long)
-
+    def transforms(self, img_name):
+        data = Image.open(os.path.join(self.dir, img_name)).convert("L")
+        f_transforms = T.Compose([T.Resize((128, 128)), T.ToTensor(),])
+        data = f_transforms(data)
+        return data
 
     def __len__(self):
-        """__len__ method.
-
-        Returns:
-            int: len. of dataset.
-
-        """
-        return len(self.png_list)
+        return len(self.data)
 
 
-if __name__ == "__main__":    
+if __name__ == "__main__":
     import cv2, sys
+
     t = Data(train=True)
 
     for i in range(len(t)):
-        img, label  = t[i]
+        img, c_label, label = t[i]
 
-        cv2.imshow('tmp', img.numpy()[0, :, :, np.newaxis])
+        print(label)
+        cv2.imshow("tmp", img.numpy()[0, :, :, np.newaxis])
         k = cv2.waitKey()
         if k == 27:
             sys.exit()
