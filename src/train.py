@@ -11,7 +11,7 @@ Example:
 import torch
 import numpy as np
 import sys
-import os
+import os, cv2
 import dataset
 from datetime import datetime
 from model import CNN
@@ -51,7 +51,6 @@ def train(path=None, log_path=None):
 
     """ ===== Constant var. start ====="""
     train_comment = ""
-    pre_process = False
     use_gpu = True
     num_workers = 7
     batch_size = 128
@@ -63,7 +62,6 @@ def train(path=None, log_path=None):
     """ ===== Constant var. end ====="""
 
     # step0: init. log and checkpoint dir.
-    time_str = datetime.now().strftime("%Y%m%d-%H%M%S")
     checkpoints_dir = "./checkpoints/" + model_name
     if len(train_comment) > 0:
         checkpoints_dir = checkpoints_dir + "_" + train_comment
@@ -79,13 +77,14 @@ def train(path=None, log_path=None):
         log_path = "./log/{}".format(model_name)
 
     # step1: dataset
-    val_data = Data(train=False, pre_process=pre_process)
+    val_data = Data(train=False)
     val_dataloader = DataLoader(val_data, 100, num_workers=num_workers)
 
-    train_data = Data(train=True, pre_process=pre_process)
+    train_data = Data(train=True)
     train_dataloader = DataLoader(train_data, batch_size, shuffle=True, num_workers=num_workers, pin_memory=True)
 
     writer = SummaryWriter(log_path)
+    best_acc_img = 0
 
     with open(log_path + "/log.txt", "w") as log_file:
 
@@ -139,24 +138,20 @@ def train(path=None, log_path=None):
                     running_loss = 0.0
 
             previous_loss = np.mean(total_loss)
-            acc_img, acc_digit = val(model, val_dataloader, use_gpu)
+            acc_img, acc_digit, im_show = val(model, val_dataloader, use_gpu)
             writer.add_scalar('eval/acc_img', acc_img, epoch * len(train_dataloader))
             writer.add_scalar('eval/acc_digit', acc_digit, epoch * len(train_dataloader))
-            save_path = "{}/{}_{}.pth".format(
-                checkpoints_dir, time_str, epoch + 1, acc_img, acc_digit
-            )
-            model.save(save_path)
-            print(
-                '{} epoch : {}, acc_img : {}, acc_digit : {}, loss : {}, path : "{}"'.format(
-                    datetime.now(), epoch, acc_img, acc_digit, previous_loss, save_path
-                ),
-                file=log_file,
-                flush=True,
-            )
-            print(
-                "acc_img : {}, acc_digit : {}, loss : {}".format(acc_img, acc_digit, previous_loss)
-            )
-            print('path : "{}"'.format(save_path))
+            im_show[0] = cv2.putText(im_show[0], ''.join(Data.decode(im_show[1])), (20, 20), 2, 1, (255, 0, 255))
+            writer.add_image("img", torch.tensor(np.transpose(im_show[0], (2, 0, 1))), epoch * len(train_dataloader))
+
+            if acc_img > best_acc_img:
+                save_path = "{}/model.pth".format(
+                    checkpoints_dir
+                )
+                model.save(save_path)
+                print(
+                    "acc_img : {}, acc_digit : {}, loss : {}".format(acc_img, acc_digit, previous_loss)
+                )
             if np.mean(total_loss) > previous_loss:
                 lr = lr * lr_decay
                 print("reduce loss from to {}".format(lr))
@@ -194,14 +189,18 @@ def val(model, dataloader, use_gpu):
             if use_gpu:
                 input = data.cuda()
             score = model(input)
-            tmp = decode(score) == label.numpy()
+            pred = decode(score)
+            tmp = pred == label.numpy()
             result_digit += tmp.tolist()
             result_img += np.all(tmp, axis=1).tolist()
 
+    i = np.random.randint(0, len(dataloader) - 1)
+    im_show = np.transpose(input[i].detach().cpu().numpy(), (1, 2, 0))
+    im_show = np.repeat((im_show * 255).astype(np.uint8), 3, -1)
     # turn model back to training mode.
     model.train()
 
-    return np.mean(result_img), np.mean(result_digit)
+    return np.mean(result_img), np.mean(result_digit), [im_show, pred[i]]
 
 if __name__ == "__main__":
     train()

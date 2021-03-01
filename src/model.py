@@ -22,97 +22,61 @@ class CNN(nn.Module):
     """
     def __init__(self):
         super(CNN, self).__init__()
-        # self.hidden1 = nn.Sequential(
-        #     nn.Conv2d(1, 32, 3, padding=1, stride=2)
-        #     ,nn.BatchNorm2d(32)
-        #     ,nn.ReLU(inplace=True)
-        #     ,nn.Conv2d(32, 32, 1, padding = 1)
-        #     ,nn.BatchNorm2d(32)
-        #     ,nn.ReLU(inplace=True)
-        # )
-
-        # self.hidden2 = nn.Sequential(
-        #     nn.Conv2d(32, 64, 3, padding=1, stride=2)
-        #     ,nn.BatchNorm2d(64)
-        #     ,nn.ReLU(inplace=True)
-        #     ,nn.Conv2d(64, 64, 1, padding = 1)
-        #     ,nn.BatchNorm2d(64)
-        #     ,nn.ReLU(inplace=True)
-        # )
-
-        # self.hidden3 = nn.Sequential(
-        #     nn.Conv2d(64, 128, 3, padding=1, stride = 2)
-        #     ,nn.BatchNorm2d(128)
-        #     ,nn.ReLU(inplace=True)
-        #     ,nn.Conv2d(128, 128, 1, padding = 1)
-        #     ,nn.BatchNorm2d(128)
-        #     ,nn.ReLU(inplace=True)
-        # )
-
-        # self.hidden4 = nn.Sequential(
-        #     nn.Conv2d(128, 256, 3, padding = 1, stride= 2)
-        #     ,nn.BatchNorm2d(256)
-        #     ,nn.ReLU(inplace=True),
-        #     nn.Conv2d(256, 256, 3, padding = 1, stride= 1)
-        #     ,nn.BatchNorm2d(256)
-        #     ,nn.ReLU(inplace=True)
-        # )
-        
-        # self.hidden5 = nn.Sequential(
-        #     nn.Conv2d(256, 256, 3, padding = 1, stride= 2)
-        #     ,nn.BatchNorm2d(256)
-        #     ,nn.ReLU(inplace=True)
-        # )
-
         self.hidden1 = nn.Sequential(
-            nn.Conv2d(1, 32, 3, padding=1)
-            ,nn.ReLU()
-            ,nn.Conv2d(32, 32, 3)
-            ,nn.ReLU()
+            nn.Conv2d(1, 32, 3, padding=1, stride=2)
             ,nn.BatchNorm2d(32)
-            ,nn.MaxPool2d(2)
-            ,nn.Dropout2d(p=0.3)
+            ,nn.ReLU(inplace=True)
+            ,nn.Conv2d(32, 32, 1, padding = 1)
+            ,nn.BatchNorm2d(32)
+            ,nn.ReLU(inplace=True)
         )
 
         self.hidden2 = nn.Sequential(
-            nn.Conv2d(32, 64, 3, padding=1)
-            ,nn.ReLU()
-            ,nn.Conv2d(64, 64, 3)
-            ,nn.ReLU()
+            nn.Conv2d(32, 64, 3, padding=1, stride=2)
             ,nn.BatchNorm2d(64)
-            ,nn.MaxPool2d(2)
-            ,nn.Dropout2d(p=0.3)
+            ,nn.ReLU(inplace=True)
+            ,nn.Conv2d(64, 64, 1, padding = 1)
+            ,nn.BatchNorm2d(64)
+            ,nn.ReLU(inplace=True)
         )
 
         self.hidden3 = nn.Sequential(
-            nn.Conv2d(64, 128, 3, padding=1)
-            ,nn.ReLU()
-            ,nn.Conv2d(128, 128, 3)
-            ,nn.ReLU()
+            nn.Conv2d(64, 128, 3, padding=1, stride = 2)
             ,nn.BatchNorm2d(128)
-            ,nn.MaxPool2d(2)
-            ,nn.Dropout2d(p=0.3)
+            ,nn.ReLU(inplace=True)
+            ,nn.Conv2d(128, 128, 1, padding = 1)
+            ,nn.BatchNorm2d(128)
+            ,nn.ReLU(inplace=True)
         )
 
         self.hidden4 = nn.Sequential(
-            nn.Conv2d(128, 256, 3)
-            ,nn.ReLU()
+            nn.Conv2d(128, 256, 3, padding = 1, stride= 2)
             ,nn.BatchNorm2d(256)
-            ,nn.MaxPool2d(2)
-            ,Flatten()
-            ,nn.Dropout(p=0.3)
+            ,nn.ReLU(inplace=True),
+            nn.Conv2d(256, 256, 3, padding = 1, stride= 1)
+            ,nn.BatchNorm2d(256)
+            ,nn.ReLU(inplace=True)
+        )
+        
+        self.hidden5 = nn.Sequential(
+            nn.Conv2d(256, 256, 3, padding = 1, stride= 2)
+            ,nn.BatchNorm2d(256)
+            ,nn.ReLU(inplace=True)
         )
 
-        self.digit1 = nn.Linear(9216, 36)
-        self.digit2 = nn.Linear(9216, 36)
-        self.digit3 = nn.Linear(9216, 36)
-        self.digit4 = nn.Linear(9216, 36)
+        self.flatten = Flatten()
+        self.digit1 = nn.Linear(6400, 19)
+        self.digit2 = nn.Linear(6400, 19)
+        self.digit3 = nn.Linear(6400, 19)
+        self.digit4 = nn.Linear(6400, 19)
 
     def forward(self, inputs):
         x = self.hidden1(inputs)
         x = self.hidden2(x)
         x = self.hidden3(x)
         x = self.hidden4(x)
+        x = self.hidden5(x) # (2, 256, 5, 5)
+        x = self.flatten(x)
         digit1 = torch.nn.functional.softmax(self.digit1(x), dim=1)
         digit2 = torch.nn.functional.softmax(self.digit2(x), dim=1)
         digit3 = torch.nn.functional.softmax(self.digit3(x), dim=1)
@@ -128,6 +92,7 @@ class CNN(nn.Module):
 
         """
         torch.save(self.state_dict(), path)
+        # torch.save(self, path)
     
     def load(self, path):
         """Load parameters of model.
@@ -137,6 +102,7 @@ class CNN(nn.Module):
 
         """
         self.load_state_dict(torch.load(path, map_location=lambda storage, loc: storage))
+        # torch.load(path)
 
 if __name__ == "__main__":
     from torchsummary import summary

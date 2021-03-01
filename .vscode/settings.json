@@ -1,0 +1,6 @@
+{
+    "files.watcherExclude": {
+        "**/dataset/**": true
+    },
+    "git.ignoreLimitWarning": true
+}
