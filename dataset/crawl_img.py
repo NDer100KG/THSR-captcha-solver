@@ -115,20 +115,6 @@ class ErrorFeedback(AbstractViewModel):
         return self.errors
 
 
-def decode(scores):
-    """Decode the CNN output.
-
-    Args:
-        scores (tensor): CNN output.
-
-    Returns:
-        list(int): list include each digit index.
-    """
-    tmp = np.array(tuple(map(lambda score: score.cpu().numpy(), scores)))
-    tmp = np.swapaxes(tmp, 0, 1)
-    return np.argmax(tmp, axis=2)
-
-
 if __name__ == "__main__":
     model = CNN()
     model.load("checkpoints/0228_ori/model.pth")
@@ -188,7 +174,7 @@ if __name__ == "__main__":
                     cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)[np.newaxis, np.newaxis, :, :] / 255.0
                 )
                 image = torch.tensor(image, dtype=torch.float32).cuda()
-                code = decode(model(image))[0]
+                code = CNN.decode(model(image))[0]
                 pred = Data.decode(code)
 
             params["homeCaptcha:securityCode"] = "".join(pred)
@@ -208,7 +194,7 @@ if __name__ == "__main__":
                 image_cnt += 1
             else:
                 cv2.imwrite("dataset/error/" + str(error_cnt).zfill(5) + ".jpg", image_ori)
-                print("Accuracy:" , (image_cnt - 1) / (image_cnt + error_cnt - 2) )
+                print("Accuracy:", (image_cnt - 1) / (image_cnt + error_cnt - 2))
                 error_cnt += 1
 
             time.sleep(2)

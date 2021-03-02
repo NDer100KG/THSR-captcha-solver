@@ -6,6 +6,7 @@ This module is the definition of CNN model.
 import torch
 from torch import nn
 import torch.nn.functional as F
+import numpy as np
 
 class Flatten(nn.Module):
     """Flatten Module(layer).
@@ -103,6 +104,21 @@ class CNN(nn.Module):
         """
         self.load_state_dict(torch.load(path, map_location=lambda storage, loc: storage))
         # torch.load(path)
+
+    @staticmethod
+    def decode(code):
+        """Decode the CNN output.
+
+        Args:
+            scores (tensor): CNN output.
+
+        Returns:
+            list(int): list include each digit index.
+        """
+        tmp = np.array(tuple(map(lambda score: score.cpu().numpy(), code)))
+        tmp = np.swapaxes(tmp, 0, 1)
+        return np.argmax(tmp, axis=2)
+
 
 if __name__ == "__main__":
     from torchsummary import summary
