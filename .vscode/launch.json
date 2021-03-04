@@ -5,12 +5,21 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal"
+        },
+        {
             "name": "Crawl",
             "type": "python",
             "request": "launch",
             "program": "dataset/crawl_img.py",
             "console": "integratedTerminal",
-            "env": {"PYTHONPATH": "${workspaceFolder}:${env:PYTHONPATH}"}
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}:${env:PYTHONPATH}"
+            }
         },
         {
             "name": "Train",
@@ -18,8 +27,29 @@
             "request": "launch",
             "program": "src/train.py",
             "console": "integratedTerminal",
-            "env": {"PYTHONPATH": "${workspaceFolder}:${env:PYTHONPATH}"}
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}:${env:PYTHONPATH}"
+            }
+        },
+        {
+            "name": "Train_tf",
+            "type": "python",
+            "request": "launch",
+            "program": "src/train_tf.py",
+            "console": "integratedTerminal",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}:${env:PYTHONPATH}"
+            }
+        },
+        {
+            "name": "Model",
+            "type": "python",
+            "request": "launch",
+            "program": "src/model.py",
+            "console": "integratedTerminal",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}:${env:PYTHONPATH}"
+            }
         }
-
     ]
 }

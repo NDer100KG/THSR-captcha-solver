@@ -37,8 +37,9 @@ dic19 = {
 
 
 class Data(data.Dataset):
-    def __init__(self, train, dir=["dataset/train"], train_val_ratio=0.9):
+    def __init__(self, train, dir=["dataset/train"], train_val_ratio=0.9, format="NCHW"):
         self.dir = dir
+        self.format = format
         self.load_csv()
         self.train_val_ratio = train_val_ratio
         if train:
@@ -59,6 +60,9 @@ class Data(data.Dataset):
         name, label = self.data[index]
         code = self.encode(label)
         data = self.transforms(name)
+
+        if self.format == "NHWC":
+            data = data.permute(1, 2, 0)
         return data, torch.tensor(code, dtype=torch.long)
 
     def transforms(self, img_name):
@@ -87,7 +91,7 @@ class Data(data.Dataset):
 if __name__ == "__main__":
     import cv2, sys
 
-    t = Data(train=True, dir = ["dataset/train"])
+    t = Data(train=True, dir=["dataset/train"], format="NHWC")
 
     for i in range(len(t)):
         img, code = t[i]  # (1, 128, 128)
