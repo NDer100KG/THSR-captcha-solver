@@ -19,7 +19,7 @@ import numpy as np
 class Loss(tf.keras.layers.Layer):
     def __init__(self):
         super(Loss, self).__init__()
-        self.sce = tf.keras.losses.SparseCategoricalCrossentropy()
+        self.sce = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
 
     def call(self, scores, labels):
         sce0 = self.sce(labels[:, 0], scores[0])
@@ -42,12 +42,13 @@ def train(path=None, log_path=None):
     """ ===== Constant var. start ====="""
     train_comment = ""
     num_workers = 7
-    batch_size = 64
+    batch_size = 128
     lr = 0.001
     lr_decay = 0.9
+    lr_decay_step = 500
     max_epoch = 500
     stat_freq = 10
-    model_name = "0304_tf_2"
+    model_name = "0304_tf"
     """ ===== Constant var. end ====="""
 
     # step0: init. log and checkpoint dir.
@@ -85,7 +86,8 @@ def train(path=None, log_path=None):
 
     # step3: loss function and optimizer
     criterion = Loss()
-    optimizer = tf.keras.optimizers.Adam(1e-3)
+    scheduler = tf.keras.optimizers.schedules.ExponentialDecay(lr, lr_decay_step, lr_decay)
+    optimizer = tf.keras.optimizers.Adam(scheduler)
 
     global_step = tf.Variable(1)
     checkpoint = tf.train.Checkpoint(optimizer=optimizer, model=model, step=global_step,)
@@ -128,6 +130,7 @@ def train(path=None, log_path=None):
                         running_loss / stat_freq,
                         step=epoch * len(train_dataloader) + i,
                     )
+                    # tf.summary.scalar("train/lr", )
 
                 running_loss = 0.0
 
@@ -144,7 +147,7 @@ def train(path=None, log_path=None):
 
         if acc_img > best_acc_img:
             # ckpt_manager.save()
-            model.save(checkpoints_dir, save_format = 'h5')
+            model.save(checkpoints_dir, save_format="tf")
             print(
                 "acc_img : {}, acc_digit : {}, loss : {}".format(acc_img, acc_digit, previous_loss)
             )

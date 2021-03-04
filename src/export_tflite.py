@@ -22,7 +22,7 @@ def export_frozen_pb(model, checkpoints_dir):
 
 
 if __name__ == "__main__":
-    model_path = "0304_tf_2"
+    model_path = "0304_tf"
     model_path = os.path.join("checkpoints", model_path)
 
     model = tf.keras.models.load_model(model_path)

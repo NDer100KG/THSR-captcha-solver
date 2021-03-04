@@ -56,7 +56,9 @@ python src/train.py
 It stores the highest accuracy model in `checkpoints/`
 
 accuracy curve below shows no much difference with image preprocessing
-(blue with original images, orange with processed images)
+* blue: torch / ori image
+* orange: torch / aug img
+* red: tensorflow / ori image
 <img src="log.png">
 
 
